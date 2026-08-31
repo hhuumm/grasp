@@ -16,6 +16,7 @@ Try the complete training loop without an account at `/demo`: read a passage, hi
 
 - **User Authentication**: Secure sign-up/sign-in with Clerk
 - **Reading Passages**: Diverse content with difficulty levels and tags
+- **Book Discovery**: Search Open Library metadata and select a title as training context
 - **AI-Powered Scoring**: Get instant feedback on your summaries
 - **Multiple AI Providers**: Support for OpenAI, local models, and more
 - **Progress Tracking**: Monitor your improvement over time
@@ -61,6 +62,9 @@ Before you begin, ensure you have the following installed:
 
    # Encryption key for user API keys
    ENCRYPTION_KEY=your_32_character_encryption_key_here
+
+   # Contact used to identify Grasp's low-volume Open Library requests
+   OPEN_LIBRARY_CONTACT_EMAIL=you@example.com
    ```
 
 4. **Set up the database**
@@ -89,6 +93,8 @@ Before you begin, ensure you have the following installed:
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
+- `npm test` - Run focused unit tests
+- `npm run check` - Run lint, tests, and the production build
 - `npm run db:generate` - Generate Prisma client
 - `npm run db:push` - Push schema to database
 - `npm run db:migrate` - Run database migrations
@@ -119,6 +125,14 @@ Before you begin, ensure you have the following installed:
 2. Start your local model server
 3. Configure the endpoint in the AI connections page (e.g., `http://localhost:11434/api/generate`)
 
+## 📚 Open Library Book Discovery
+
+The `/books` page uses the Open Library Search API for human-initiated title, author, ISBN, and topic searches. Requests go through Grasp's server, request only the catalog fields used by the interface, identify the application with `OPEN_LIBRARY_CONTACT_EMAIL`, and cache responses for one hour with stale revalidation.
+
+This integration provides discovery metadata—not copyrighted book text. Selecting a book stores its title, authors, and Open Library work link in the browser as context for the demo workflow. Users must obtain and read the book through a lawful source; Grasp continues to use its own included passages for training.
+
+The integration is intentionally low-volume: it does not scrape Open Library pages, harvest records, or perform bulk imports. Gutendex/Project Gutenberg is not currently integrated; it remains a possible future source for public-domain reading text.
+
 ## 📊 Database Schema
 
 The app uses three main entities:
@@ -148,6 +162,7 @@ The app includes a comprehensive UI component library:
 - `/sign-in` - Authentication
 - `/sign-up` - Registration
 - `/dashboard` - Main dashboard with stats and recent activity
+- `/books` - Open Library catalog search and training selection
 - `/passage/[id]` - Reading and summary submission
 - `/connections` - AI service configuration
 - `/admin/passages` - Passage management (admin)

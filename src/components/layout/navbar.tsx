@@ -4,10 +4,11 @@ import { UserButton, useUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { BookOpen, Home, Settings, Users } from 'lucide-react'
+import { BookMarked, BookOpen, Home, Settings, Users } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
+  { name: 'Discover', href: '/books', icon: BookMarked },
   { name: 'Passages', href: '/passages', icon: BookOpen },
   { name: 'Connections', href: '/connections', icon: Settings },
   { name: 'Admin', href: '/admin', icon: Users },

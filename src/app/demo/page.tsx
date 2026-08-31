@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ThemeSelector, ThemeSelectorModal } from '@/components/theme-selector'
+import type { OpenLibraryBook } from '@/lib/open-library'
 import { BookOpen, TrendingUp, Clock, Target, ArrowRight, X, CheckCircle, AlertCircle, Key, Settings } from 'lucide-react'
 
 // Mock data for demonstration
@@ -70,6 +71,7 @@ export default function DemoPage() {
   const [openaiApiKey, setOpenaiApiKey] = useState('')
   const [useRealAI, setUseRealAI] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [selectedBook, setSelectedBook] = useState<OpenLibraryBook | null>(null)
 
   // Load API key from localStorage on mount
   useEffect(() => {
@@ -77,6 +79,15 @@ export default function DemoPage() {
     if (savedKey) {
       setOpenaiApiKey(savedKey)
       setUseRealAI(true)
+    }
+
+    const savedBook = localStorage.getItem('grasp:selected-book')
+    if (savedBook) {
+      try {
+        setSelectedBook(JSON.parse(savedBook) as OpenLibraryBook)
+      } catch {
+        localStorage.removeItem('grasp:selected-book')
+      }
     }
   }, [])
 
@@ -291,6 +302,24 @@ export default function DemoPage() {
                 This is a demonstration of the reading comprehension app interface
               </p>
             </div>
+
+            {selectedBook && (
+              <Card className="border-2 border-[var(--primary)]">
+                <CardHeader>
+                  <Badge color="success" className="w-fit">Book context</Badge>
+                  <CardTitle>{selectedBook.title}</CardTitle>
+                  <CardDescription>
+                    {selectedBook.authors.join(', ') || 'Unknown author'} · selected from Open Library
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="max-w-2xl text-sm text-gray-600">
+                    Use this title to guide your reading goals. Grasp does not import its text; the included passages below remain the practice material.
+                  </p>
+                  <Link href="/books"><Button outline>Choose another book</Button></Link>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
