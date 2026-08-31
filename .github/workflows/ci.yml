@@ -22,7 +22,8 @@ jobs:
       - run: npm test
       - run: npm run build
         env:
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_placeholder
+          # Format-valid, non-secret Clerk frontend identifier for prerender validation.
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_Z3Jhc3AtY2kuY2xlcmsuYWNjb3VudHMuZGV2JA==
           CLERK_SECRET_KEY: sk_test_placeholder
           DATABASE_URL: postgresql://user:password@localhost:5432/grasp
           ENCRYPTION_KEY: ci-only-placeholder-key
