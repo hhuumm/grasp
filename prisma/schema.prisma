@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Passages table for storing reading comprehension texts
+model Passage {
+  id          String   @id @default(cuid())
+  text        String   @db.Text
+  source      String?
+  difficulty  String   // e.g., "beginner", "intermediate", "advanced"
+  tags        String[] // Array of tags for categorization
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  responses ComprehensionResponse[]
+
+  @@map("passages")
+}
+
+// User AI connections for storing API configurations
+model UserAIConnection {
+  id        String   @id @default(cuid())
+  userId    String   // Clerk user ID
+  provider  String   // e.g., "openai", "local", "anthropic"
+  apiKey    String?  // Encrypted API key (nullable for local endpoints)
+  endpoint  String?  // Custom endpoint URL (for local models)
+  model     String   // Model name/identifier
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  responses ComprehensionResponse[]
+
+  @@map("user_ai_connections")
+}
+
+// Comprehension responses storing user summaries and AI feedback
+model ComprehensionResponse {
+  id          String   @id @default(cuid())
+  userId      String   // Clerk user ID
+  passageId   String
+  summaryText String   @db.Text
+  aiScore     Float?   // AI-generated score (0-100)
+  aiFeedback  String?  @db.Text
+  timestamp   DateTime @default(now())
+
+  // Relations
+  passage      Passage          @relation(fields: [passageId], references: [id], onDelete: Cascade)
+  aiConnection UserAIConnection @relation(fields: [aiConnectionId], references: [id])
+  aiConnectionId String
+
+  @@map("comprehension_responses")
+}
