@@ -2,6 +2,8 @@ import { SignUp } from '@clerk/nextjs'
 import Link from 'next/link'
 
 export default function Page() {
+  const clerkEnabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[var(--background)] to-gray-100 p-4">
       <div className="w-full max-w-md">
@@ -13,7 +15,7 @@ export default function Page() {
           <p className="text-gray-600 mt-2">Create your account to start improving your reading comprehension</p>
         </div>
         <div className="flex justify-center">
-          <SignUp
+          {clerkEnabled ? <SignUp
             appearance={{
               elements: {
                 rootBox: "mx-auto",
@@ -26,7 +28,14 @@ export default function Page() {
                 footerActionLink: "text-[var(--primary)] hover:text-[var(--primary)]/80",
               }
             }}
-          />
+          /> : (
+            <div className="rounded-2xl bg-white p-6 text-center shadow-lg">
+              <p className="text-gray-700">Account creation is not configured for this demo deployment.</p>
+              <Link href="/demo" className="mt-4 inline-block font-semibold text-[var(--primary)]">
+                Continue to the demo
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

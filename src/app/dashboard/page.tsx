@@ -39,9 +39,10 @@ const mockResponses = [
 ]
 
 export default async function DashboardPage() {
-  const user = await currentUser()
+  const clerkEnabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+  const user = clerkEnabled ? await currentUser() : null
   
-  if (!user) {
+  if (clerkEnabled && !user) {
     redirect('/sign-in')
   }
 
@@ -51,7 +52,7 @@ export default async function DashboardPage() {
         {/* Welcome Section */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
           <h1 className="text-3xl font-bold mb-2">
-            Welcome back, {user.firstName || 'Reader'}!
+            Welcome back, {user?.firstName || 'Reader'}!
           </h1>
           <p className="text-blue-100">
             Continue your reading comprehension journey

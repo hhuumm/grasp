@@ -16,7 +16,7 @@ const navigation = [
 
 export function Navbar() {
   const pathname = usePathname()
-  const { user } = useUser()
+  const clerkEnabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
 
   return (
     <nav className="bg-white shadow-sm border-b">
@@ -50,15 +50,27 @@ export function Navbar() {
             </div>
           </div>
           <div className="flex items-center">
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-700">
-                Welcome, {user?.firstName || 'User'}
-              </span>
-              <UserButton afterSignOutUrl="/" />
-            </div>
+            {clerkEnabled ? <AuthenticatedUser /> : (
+              <Link href="/demo" className="text-sm font-medium text-[var(--primary)]">
+                Try the demo
+              </Link>
+            )}
           </div>
         </div>
       </div>
     </nav>
+  )
+}
+
+function AuthenticatedUser() {
+  const { user } = useUser()
+
+  return (
+    <div className="flex items-center space-x-4">
+      <span className="text-sm text-gray-700">
+        Welcome, {user?.firstName || 'User'}
+      </span>
+      <UserButton afterSignOutUrl="/" />
+    </div>
   )
 }
