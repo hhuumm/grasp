@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     const aiConnection = {
       id: aiConnectionId || 'demo',
       provider: 'openai' as const,
-      model: 'gpt-4',
+      model: 'gpt-5-mini',
       apiKey: effectiveApiKey,
       endpoint: undefined,
     }

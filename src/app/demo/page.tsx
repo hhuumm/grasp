@@ -72,6 +72,7 @@ export default function DemoPage() {
   const [useRealAI, setUseRealAI] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [selectedBook, setSelectedBook] = useState<OpenLibraryBook | null>(null)
+  const [scoringError, setScoringError] = useState<string | null>(null)
 
   // Load API key from localStorage on mount
   useEffect(() => {
@@ -112,6 +113,7 @@ export default function DemoPage() {
     setPhase('reading')
     setReadingStartTime(Date.now())
     setReadingTime(0)
+    setScoringError(null)
   }
 
   const handleDoneReading = () => {
@@ -128,125 +130,64 @@ export default function DemoPage() {
     setReadingTime(0)
   }
 
-  const generateMockFeedback = (passageText: string, summaryText: string) => {
-    const summaryLength = summaryText.split(' ').length
-    const passageLength = passageText.split(' ').length
-    const ratio = summaryLength / passageLength
-
-    // Generate a score based on summary length and content
-    let score = 70
-    if (ratio > 0.3 && ratio < 0.5) score += 10 // Good length ratio
-    if (summaryText.toLowerCase().includes('however') || summaryText.toLowerCase().includes('although')) score += 5
-    if (summaryText.split('.').length > 2) score += 5 // Multiple sentences
-
-    score = Math.min(95, Math.max(60, score))
-
-    const strengths = []
-    const improvements = []
-
-    if (summaryLength > 20) {
-      strengths.push('Adequate detail provided')
-    } else {
-      improvements.push('Add more detail to your summary')
-    }
-
-    if (summaryText.split('.').length > 2) {
-      strengths.push('Good sentence structure')
-    } else {
-      improvements.push('Use multiple sentences for clarity')
-    }
-
-    if (ratio < 0.6) {
-      strengths.push('Concise and focused')
-    } else {
-      improvements.push('Try to be more concise')
-    }
-
-    const feedbackTemplates = [
-      `Your summary demonstrates ${score >= 80 ? 'strong' : 'good'} comprehension of the passage. `,
-      `You've captured ${score >= 80 ? 'most' : 'several'} of the key points. `,
-      score >= 80 ? 'Well done on identifying the main themes. ' : 'Consider focusing more on the central ideas. ',
-    ]
-
-    return {
-      score,
-      feedback: feedbackTemplates.join(''),
-      strengths,
-      improvements,
-    }
-  }
-
   const handleSubmitSummary = async () => {
     if (!summary.trim() || !selectedPassage) return
 
     setIsSubmitting(true)
+    setScoringError(null)
 
     const writingTime = Math.floor((Date.now() - writingStartTime) / 1000)
     const totalTime = readingTime + writingTime
 
-    let result
+    if (!useRealAI || !openaiApiKey) {
+      setScoringError('Connect an OpenAI API key in Settings before submitting. Grasp no longer fabricates scores.')
+      setIsSubmitting(false)
+      return
+    }
 
-    if (useRealAI && openaiApiKey) {
-      // Use real OpenAI API
-      try {
-        const response = await fetch('/api/score-summary', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            passageText: selectedPassage.text,
-            summaryText: summary,
-            apiKey: openaiApiKey,
-          }),
-        })
+    try {
+      const response = await fetch('/api/score-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          passageText: selectedPassage.text,
+          summaryText: summary,
+          apiKey: openaiApiKey,
+        }),
+      })
 
-        if (response.ok) {
-          const data = await response.json()
-          result = {
-            score: data.score,
-            feedback: data.feedback,
-            strengths: data.strengths || [],
-            improvements: data.improvements || [],
-          }
-        } else {
-          // Fallback to mock if API fails
-          console.error('API request failed, using mock scoring')
-          result = generateMockFeedback(selectedPassage.text, summary)
-        }
-      } catch (error) {
-        console.error('Error calling OpenAI API:', error)
-        result = generateMockFeedback(selectedPassage.text, summary)
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.message || data.error || 'AI scoring failed')
       }
-    } else {
-      // Use mock scoring
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      result = generateMockFeedback(selectedPassage.text, summary)
-    }
 
-    const newResponse = {
-      id: Date.now().toString(),
-      passageId: selectedPassage.id,
-      summaryText: summary,
-      aiScore: result.score,
-      aiFeedback: result.feedback,
-      strengths: result.strengths,
-      improvements: result.improvements,
-      timestamp: new Date(),
-      readingTime,
-      writingTime,
-      totalTime,
-      usedRealAI: useRealAI && openaiApiKey ? true : false,
-    }
+      const newResponse = {
+        id: Date.now().toString(),
+        passageId: selectedPassage.id,
+        summaryText: summary,
+        aiScore: data.score,
+        aiFeedback: data.feedback,
+        strengths: data.strengths || [],
+        improvements: data.improvements || [],
+        timestamp: new Date(),
+        readingTime,
+        writingTime,
+        totalTime,
+        usedRealAI: true,
+      }
 
-    setResponses([newResponse, ...responses])
-    setCurrentResult(newResponse)
-    setIsSubmitting(false)
-    setShowResult(true)
-    setSelectedPassage(null)
-    setSummary('')
-    setPhase('reading')
-    setReadingTime(0)
+      setResponses([newResponse, ...responses])
+      setCurrentResult(newResponse)
+      setShowResult(true)
+      setSelectedPassage(null)
+      setSummary('')
+      setPhase('reading')
+      setReadingTime(0)
+    } catch (error) {
+      setScoringError(error instanceof Error ? error.message : 'AI scoring failed. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleCloseResult = () => {
@@ -531,6 +472,12 @@ export default function DemoPage() {
                     </ul>
                   </div>
 
+                  {scoringError && (
+                    <div role="alert" className="rounded-2xl border-2 border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                      {scoringError}
+                    </div>
+                  )}
+
                   {/* Actions */}
                   <div className="flex gap-3 justify-end">
                     <Button outline onClick={handleCloseModal}>
@@ -746,13 +693,13 @@ export default function DemoPage() {
                 <div className="flex items-center gap-3 mb-2">
                   <div className={`w-3 h-3 rounded-full ${useRealAI ? 'bg-green-500' : 'bg-gray-400'}`}></div>
                   <h3 className={`font-semibold ${useRealAI ? 'text-green-900' : 'text-gray-700'}`}>
-                    {useRealAI ? 'AI Connected' : 'Using Mock Scoring'}
+                    {useRealAI ? 'AI Connected' : 'AI Not Connected'}
                   </h3>
                 </div>
                 <p className={`text-sm ${useRealAI ? 'text-green-800' : 'text-gray-600'}`}>
                   {useRealAI
-                    ? 'Your summaries will be scored using OpenAI GPT-4 for intelligent, contextual feedback.'
-                    : 'Connect your OpenAI API key to get real AI-powered feedback on your summaries.'}
+                    ? 'Your summaries will be strictly scored using OpenAI GPT-5 Mini, with a 350-token output cap per request.'
+                    : 'Connect your OpenAI API key to enable scoring. Grasp will not generate a fake fallback score.'}
                 </p>
               </div>
 
@@ -780,7 +727,7 @@ export default function DemoPage() {
                   )}
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  Your API key is stored locally in your browser and never sent to our servers.
+                  Your key is stored locally in your browser and sent only through this app&apos;s scoring endpoint to OpenAI when you submit a summary.
                 </p>
               </div>
 
