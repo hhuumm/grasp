@@ -2,6 +2,8 @@
 
 A modern reading-comprehension trainer built with Next.js, featuring timed recall, AI-assisted feedback, and progress tracking.
 
+**Live demo:** [grasp-one.vercel.app](https://grasp-one.vercel.app)
+
 Try the complete training loop without an account at `/demo`: read a passage, hide it, summarize it from memory, and review targeted feedback.
 
 ## 🧱 Tech Stack
