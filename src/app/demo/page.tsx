@@ -130,6 +130,33 @@ export default function DemoPage() {
     setReadingTime(0)
   }
 
+  const generateDemoFeedback = (passageText: string, summaryText: string) => {
+    const stopWords = new Set([
+      'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'have',
+      'in', 'is', 'it', 'of', 'on', 'or', 'that', 'the', 'their', 'these', 'this',
+      'to', 'was', 'were', 'will', 'with', 'you', 'your',
+    ])
+    const words = (text: string) => text
+      .toLowerCase()
+      .match(/[a-z0-9]+/g)
+      ?.filter(word => word.length > 2 && !stopWords.has(word)) || []
+
+    const passageWords = new Set(words(passageText))
+    const summaryWords = [...new Set(words(summaryText))]
+    const matchingWords = summaryWords.filter(word => passageWords.has(word))
+    const relevance = summaryWords.length ? matchingWords.length / summaryWords.length : 0
+    const score = Math.min(85, Math.round(relevance * 100))
+
+    return {
+      score,
+      feedback: `Simulated demo score based only on keyword overlap (${matchingWords.length} of ${summaryWords.length} meaningful summary words matched). This is not an AI comprehension judgment.`,
+      strengths: matchingWords.length
+        ? [`Referenced passage terms: ${matchingWords.slice(0, 5).join(', ')}`]
+        : [],
+      improvements: ['Connect the summary directly to the passage’s main ideas.', 'Enable AI scoring for a genuine comprehension evaluation.'],
+    }
+  }
+
   const handleSubmitSummary = async () => {
     if (!summary.trim() || !selectedPassage) return
 
@@ -140,7 +167,29 @@ export default function DemoPage() {
     const totalTime = readingTime + writingTime
 
     if (!useRealAI || !openaiApiKey) {
-      setScoringError('Connect an OpenAI API key in Settings before submitting. Grasp no longer fabricates scores.')
+      const result = generateDemoFeedback(selectedPassage.text, summary)
+      const newResponse = {
+        id: Date.now().toString(),
+        passageId: selectedPassage.id,
+        summaryText: summary,
+        aiScore: result.score,
+        aiFeedback: result.feedback,
+        strengths: result.strengths,
+        improvements: result.improvements,
+        timestamp: new Date(),
+        readingTime,
+        writingTime,
+        totalTime,
+        usedRealAI: false,
+      }
+
+      setResponses([newResponse, ...responses])
+      setCurrentResult(newResponse)
+      setShowResult(true)
+      setSelectedPassage(null)
+      setSummary('')
+      setPhase('reading')
+      setReadingTime(0)
       setIsSubmitting(false)
       return
     }
@@ -443,6 +492,15 @@ export default function DemoPage() {
             </div>
 
             <div className="p-6 space-y-6">
+              {!useRealAI && (
+                <div role="alert" className="rounded-2xl border-4 border-red-600 bg-red-50 p-5 text-center shadow-sm">
+                  <p className="text-xl font-black tracking-wide text-red-800">NO AI — SIMULATED DEMO SCORE</p>
+                  <p className="mt-1 font-bold text-red-700">
+                    Your result will use a basic keyword-overlap estimate, not an AI comprehension evaluation.
+                  </p>
+                </div>
+              )}
+
               {phase === 'reading' ? (
                 <>
                   {/* Reading Phase - Show Passage */}
@@ -557,7 +615,9 @@ export default function DemoPage() {
               <div className="flex justify-between items-start">
                 <div>
                   <h2 className="text-2xl font-bold mb-2">Your Results</h2>
-                  <p className="text-white/90">AI Feedback on your summary</p>
+                  <p className="text-white/90">
+                    {currentResult.usedRealAI ? 'AI Feedback on your summary' : 'Simulated demo feedback — no AI was used'}
+                  </p>
                 </div>
                 <button
                   onClick={handleCloseResult}
@@ -597,7 +657,7 @@ export default function DemoPage() {
               <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-5">
                 <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
                   <AlertCircle className="w-5 h-5" />
-                  AI Feedback
+                  {currentResult.usedRealAI ? 'AI Feedback' : 'Simulated Feedback — NO AI'}
                 </h3>
                 <p className="text-blue-800">{currentResult.aiFeedback}</p>
               </div>
@@ -693,13 +753,13 @@ export default function DemoPage() {
                 <div className="flex items-center gap-3 mb-2">
                   <div className={`w-3 h-3 rounded-full ${useRealAI ? 'bg-green-500' : 'bg-gray-400'}`}></div>
                   <h3 className={`font-semibold ${useRealAI ? 'text-green-900' : 'text-gray-700'}`}>
-                    {useRealAI ? 'AI Connected' : 'AI Not Connected'}
+                    {useRealAI ? 'AI Connected' : 'NO AI — Simulated Scoring'}
                   </h3>
                 </div>
                 <p className={`text-sm ${useRealAI ? 'text-green-800' : 'text-gray-600'}`}>
                   {useRealAI
                     ? 'Your summaries will be strictly scored using OpenAI GPT-5 Mini, with a 350-token output cap per request.'
-                    : 'Connect your OpenAI API key to enable scoring. Grasp will not generate a fake fallback score.'}
+                    : 'The demo can continue with a clearly labeled keyword-overlap estimate. Connect your OpenAI API key for genuine comprehension scoring.'}
                 </p>
               </div>
 
