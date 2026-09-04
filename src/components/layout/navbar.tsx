@@ -24,8 +24,13 @@ export function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/dashboard" className="text-2xl font-bold text-[var(--primary)]">
-                Grasp
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-2 text-2xl font-bold text-[var(--primary)]"
+                aria-label="Grasp dashboard"
+              >
+                <BookOpen className="h-7 w-7" aria-hidden="true" />
+                <span>Grasp</span>
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">

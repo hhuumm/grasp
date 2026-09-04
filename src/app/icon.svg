@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Grasp book logo">
+  <rect width="64" height="64" rx="14" fill="#3f4f24"/>
+  <path d="M12 16.5c0-2.5 2-4.5 4.5-4.5H28c2.2 0 4 1.8 4 4v34c-2.8-3.5-6.5-5.2-11-5.2h-9V16.5Z" fill="#fff"/>
+  <path d="M52 16.5c0-2.5-2-4.5-4.5-4.5H36c-2.2 0-4 1.8-4 4v34c2.8-3.5 6.5-5.2 11-5.2h9V16.5Z" fill="#fff"/>
+  <path d="M32 16v34" stroke="#dbe7c4" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M17 20h9M17 26h9M38 20h9M38 26h9" stroke="#3f4f24" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>
+</svg>
