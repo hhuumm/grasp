@@ -57,6 +57,8 @@ type DemoResult = (typeof initialMockResponses)[number] & {
   usedRealAI: boolean
 }
 
+type TutorialStep = 'settings' | 'api-key' | 'save' | null
+
 export default function DemoPage() {
   const [selectedPassage, setSelectedPassage] = useState<typeof mockPassages[0] | null>(null)
   const [summary, setSummary] = useState('')
@@ -73,6 +75,7 @@ export default function DemoPage() {
   const [showSettings, setShowSettings] = useState(false)
   const [selectedBook, setSelectedBook] = useState<OpenLibraryBook | null>(null)
   const [scoringError, setScoringError] = useState<string | null>(null)
+  const [tutorialStep, setTutorialStep] = useState<TutorialStep>(null)
 
   // Load API key from localStorage on mount
   useEffect(() => {
@@ -80,6 +83,8 @@ export default function DemoPage() {
     if (savedKey) {
       setOpenaiApiKey(savedKey)
       setUseRealAI(true)
+    } else if (!localStorage.getItem('grasp:ai-tutorial-complete')) {
+      setTutorialStep('settings')
     }
 
     const savedBook = localStorage.getItem('grasp:selected-book')
@@ -96,9 +101,32 @@ export default function DemoPage() {
   const handleSaveApiKey = () => {
     if (openaiApiKey.trim()) {
       localStorage.setItem('openai_api_key', openaiApiKey.trim())
+      localStorage.setItem('grasp:ai-tutorial-complete', 'true')
       setUseRealAI(true)
+      setTutorialStep(null)
       setShowSettings(false)
     }
+  }
+
+  const handleOpenSettings = () => {
+    setShowSettings(true)
+    if (tutorialStep === 'settings') setTutorialStep('api-key')
+  }
+
+  const handleCloseSettings = () => {
+    setShowSettings(false)
+    if (tutorialStep) setTutorialStep('settings')
+  }
+
+  const handleApiKeyChange = (value: string) => {
+    setOpenaiApiKey(value)
+    if (tutorialStep === 'api-key' && value.trim()) setTutorialStep('save')
+    if (tutorialStep === 'save' && !value.trim()) setTutorialStep('api-key')
+  }
+
+  const handleSkipTutorial = () => {
+    localStorage.setItem('grasp:ai-tutorial-complete', 'true')
+    setTutorialStep(null)
   }
 
   const handleRemoveApiKey = () => {
@@ -264,8 +292,8 @@ export default function DemoPage() {
               )}
               <Button
                 outline
-                onClick={() => setShowSettings(true)}
-                className="flex items-center gap-2"
+                onClick={handleOpenSettings}
+                className={`flex items-center gap-2 ${tutorialStep === 'settings' ? 'ring-4 ring-yellow-400 ring-offset-4 animate-pulse' : ''}`}
               >
                 <Settings className="w-4 h-4" />
                 Settings
@@ -278,6 +306,26 @@ export default function DemoPage() {
           </div>
         </div>
       </header>
+
+      {tutorialStep === 'settings' && !showSettings && (
+        <div className="border-b-4 border-yellow-400 bg-yellow-50 px-4 py-5 shadow-md">
+          <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-4 sm:flex-row">
+            <div>
+              <p className="text-sm font-black uppercase tracking-widest text-yellow-800">Step 1 of 3 · Enable real AI scoring</p>
+              <p className="mt-1 text-lg font-bold text-gray-900">
+                Click <span className="rounded bg-gray-900 px-2 py-1 text-white">Settings</span> at the top of the page.
+              </p>
+              <p className="mt-1 text-sm text-gray-700">Look for the flashing button with the gear icon. You can’t miss it.</p>
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <Button color="primary" onClick={handleOpenSettings} className="animate-pulse">
+                <Settings className="mr-2 h-4 w-4" /> Open Settings for me
+              </Button>
+              <Button outline onClick={handleSkipTutorial}>Skip</Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -739,7 +787,7 @@ export default function DemoPage() {
                   <p className="text-white/90">Configure your OpenAI API connection</p>
                 </div>
                 <button
-                  onClick={() => setShowSettings(false)}
+                  onClick={handleCloseSettings}
                   className="text-white/80 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full"
                 >
                   <X className="w-6 h-6" />
@@ -748,6 +796,22 @@ export default function DemoPage() {
             </div>
 
             <div className="p-6 space-y-6">
+              {tutorialStep && (
+                <div className="rounded-2xl border-4 border-yellow-400 bg-yellow-50 p-5 shadow-md">
+                  <p className="text-sm font-black uppercase tracking-widest text-yellow-800">
+                    {tutorialStep === 'api-key' ? 'Step 2 of 3' : 'Step 3 of 3'}
+                  </p>
+                  <p className="mt-1 text-lg font-bold text-gray-900">
+                    {tutorialStep === 'api-key'
+                      ? 'Paste your OpenAI API key into the box labeled “OpenAI API Key” below.'
+                      : 'Great—now click the flashing “Save & Connect” button.'}
+                  </p>
+                  <button onClick={handleSkipTutorial} className="mt-2 text-sm font-semibold text-yellow-900 underline">
+                    Skip tutorial
+                  </button>
+                </div>
+              )}
+
               {/* Current Status */}
               <div className={`rounded-2xl p-5 border-2 ${useRealAI ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
                 <div className="flex items-center gap-3 mb-2">
@@ -772,9 +836,9 @@ export default function DemoPage() {
                   <input
                     type="password"
                     value={openaiApiKey}
-                    onChange={(e) => setOpenaiApiKey(e.target.value)}
+                    onChange={(e) => handleApiKeyChange(e.target.value)}
                     placeholder="sk-..."
-                    className="flex-1 px-4 py-3 rounded-2xl border-2 border-gray-300 focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 placeholder:text-gray-400"
+                    className={`flex-1 px-4 py-3 rounded-2xl border-2 focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 placeholder:text-gray-400 ${tutorialStep === 'api-key' ? 'border-yellow-500 ring-4 ring-yellow-200' : 'border-gray-300'}`}
                   />
                   {useRealAI && (
                     <Button
@@ -807,14 +871,14 @@ export default function DemoPage() {
 
               {/* Actions */}
               <div className="flex gap-3 justify-end">
-                <Button outline onClick={() => setShowSettings(false)}>
+                <Button outline onClick={handleCloseSettings}>
                   Cancel
                 </Button>
                 <Button
                   color="primary"
                   onClick={handleSaveApiKey}
                   disabled={!openaiApiKey.trim()}
-                  className="min-w-[120px]"
+                  className={`min-w-[120px] ${tutorialStep === 'save' ? 'ring-4 ring-yellow-400 ring-offset-4 animate-pulse' : ''}`}
                 >
                   Save & Connect
                 </Button>
