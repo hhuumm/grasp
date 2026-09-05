@@ -1,10 +1,20 @@
-# Grasp - Reading Comprehension App
+# Grasp — Reading Comprehension POC
+
+[![Status](https://img.shields.io/badge/status-proof_of_concept-3157d5)](https://github.com/hhuumm/grasp)
+[![Live demo](https://img.shields.io/badge/live_demo-open-182230)](https://grasp-one.vercel.app/demo)
+[![License](https://img.shields.io/badge/license-MIT-176451)](LICENSE)
 
 A modern reading-comprehension trainer built with Next.js, featuring timed recall, AI-assisted feedback, and progress tracking.
 
-**Live demo:** [grasp-one.vercel.app](https://grasp-one.vercel.app)
+## Try the demo
 
-Try the complete training loop without an account at `/demo`: read a passage, hide it, summarize it from memory, and review targeted feedback.
+Open the [live interactive demo](https://grasp-one.vercel.app/demo), or run the
+project locally and visit [`/demo`](http://localhost:3000/demo). The walkthrough
+lets you read a passage, hide it, summarize it from memory, and review targeted
+feedback without creating an account.
+
+> **POC status:** Grasp demonstrates the core learning experience and technical
+> direction. It is not currently presented as a production service.
 
 ## 🧱 Tech Stack
 
@@ -36,8 +46,8 @@ Before you begin, ensure you have the following installed:
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo-url>
-   cd Grasp
+   git clone https://github.com/hhuumm/grasp.git
+   cd grasp
    ```
 
 2. **Install dependencies**
@@ -199,7 +209,7 @@ This project is licensed under the MIT License.
 ## 🆘 Support
 
 If you encounter any issues:
-1. Check the [Issues](https://github.com/your-repo/issues) page
+1. Check the [Issues](https://github.com/hhuumm/grasp/issues) page
 2. Create a new issue with detailed information
 3. Include error messages and steps to reproduce
 
